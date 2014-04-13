@@ -2,7 +2,7 @@ require_relative 'spec_helper'
 
 module Barometer
   describe WeatherBug, vcr: {
-    cassette_name: 'WeatherService::WeatherBug'
+    cassette_name: 'WeatherBug'
   } do
 
     it 'auto-registers this weather service as :weather_bug' do
