@@ -3,21 +3,25 @@ require_relative 'query'
 module Barometer
   class WeatherBug
     class CurrentApi < Utils::Api
-      def initialize(query, api_code)
+      def initialize(query, oauth_token)
         @query = WeatherBug::Query.new(query)
-        @api_code = api_code
+        @oauth_token = oauth_token
       end
 
       def url
-        "http://#{@api_code}.api.wxbug.net/getLiveWeatherRSS.aspx"
+        'https://thepulseapi.earthnetworks.com/data/observations/v1/current'
       end
 
       def params
-        {ACode: @api_code, OutputType: '1'}.merge(@query.to_param)
+        oauth2_params.merge(@query.to_param)
       end
 
-      def unwrap_nodes
-        ['weather', 'ob']
+      private
+
+      attr_reader :oauth_token
+
+      def oauth2_params
+        { access_token: oauth_token.access_token }
       end
     end
   end

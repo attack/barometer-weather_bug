@@ -10,9 +10,9 @@ module Barometer
     end
 
     describe '.call' do
-      context 'when no keys are provided' do
-        let(:query) { build_query }
+      let(:query) { build_query }
 
+      context 'when no keys are provided' do
         it 'raises an error' do
           expect {
             WeatherBug.call(query)
@@ -21,58 +21,63 @@ module Barometer
       end
 
       context 'when keys are provided' do
-        let(:converted_query) { ConvertedQuery.new('90210', :short_zipcode, :metric) }
-        let(:query) { build_query.tap{|q|q.stub(:convert! => converted_query)} }
-        let(:config) { {keys: {code: WEATHERBUG_CODE}} }
+        let(:config) do
+          {
+            keys: {
+              client_id: WEATHERBUG_CLIENT_ID,
+              client_secret: WEATHERBUG_CLIENT_SECRET
+            }
+          }
+        end
+        let(:converted_query) do
+          ConvertedQuery.new('39.1,77.1', :coordinates, :metric)
+        end
 
         subject { WeatherBug.call(query, config) }
 
+        before do
+          allow(query).to receive(:convert!).with(:coordinates).
+            and_return(converted_query)
+        end
+
         it 'converts the query to accepted formats' do
-          subject
-          expect( query ).to have_received(:convert!).with(:short_zipcode, :coordinates).at_least(:once)
+          WeatherBug.call(query, config)
+
+          expect(query).to have_received(:convert!).with(:coordinates).at_least(:once)
         end
 
         it 'includes the expected data' do
-          expect( subject.query ).to eq '90210'
-          expect( subject.format ).to eq :short_zipcode
-          expect( subject ).to be_metric
+          result = WeatherBug.call(query, config)
 
-          should have_data(:current, :observed_at).as_format(:time)
-          should have_data(:current, :stale_at).as_format(:time)
+          expect(result.query).to eq '39.1,77.1'
+          expect(result.format).to eq :coordinates
+          expect(result).to be_metric
 
-          should have_data(:current, :humidity).as_format(:float)
-          should have_data(:current, :condition).as_format(:string)
-          should have_data(:current, :icon).as_format(:number)
-          should have_data(:current, :temperature).as_format(:temperature)
-          should have_data(:current, :dew_point).as_format(:temperature)
-          should have_data(:current, :wind_chill).as_format(:temperature)
-          should have_data(:current, :wind).as_format(:vector)
-          should have_data(:current, :pressure).as_format(:pressure)
-          should have_data(:current, :sun, :rise).as_format(:time)
-          should have_data(:current, :sun, :set).as_format(:time)
+          expect(result).to have_data(:current, :observed_at).as_format(:time)
 
-          should have_data(:station, :id).as_value('NRTSH')
-          should have_data(:station, :name).as_value('Campbell Hall School')
-          should have_data(:station, :city).as_value('Valley Village')
-          should have_data(:station, :state_code).as_value('CA')
-          should have_data(:station, :country).as_value('USA')
-          should have_data(:station, :zip_code).as_value('91617')
-          should have_data(:station, :latitude).as_value(34.1536102294922)
-          should have_data(:station, :longitude).as_value(-118.398056030273)
+          expect(result).to have_data(:current, :humidity).as_format(:float)
+          expect(result).to have_data(:current, :icon).as_format(:number)
+          expect(result).to have_data(:current, :temperature).as_format(:temperature)
+          expect(result).to have_data(:current, :dew_point).as_format(:temperature)
+          expect(result).to have_data(:current, :wind).as_format(:vector)
 
-          should have_data(:location, :city).as_value('Beverly Hills')
-          should have_data(:location, :state_code).as_value('CA')
-          should have_data(:location, :zip_code).as_value('90210')
+          expect( subject.forecast.size ).to eq 18
 
-          should have_data(:timezone, :to_s).as_format(/^P[DS]T$/i)
+          day_forcast = subject.forecast.find{ |p| !p.high.nil? }
+          expect(day_forcast).to have_data(:high).as_format(:temperature)
+          expect(day_forcast).to have_data(:starts_at).as_format(:time)
+          expect(day_forcast).to have_data(:ends_at).as_format(:time)
+          expect(day_forcast).to have_data(:condition).as_format(:string)
+          expect(day_forcast).to have_data(:icon).as_format(:number)
+          expect(day_forcast).to have_data(:pop).as_format(:float)
 
-          expect( subject.forecast.size ).to eq 7
-          should have_forecast(:starts_at).as_format(:time)
-          should have_forecast(:ends_at).as_format(:time)
-          should have_forecast(:condition).as_format(:string)
-          should have_forecast(:icon).as_format(:number)
-          should have_forecast(:high).as_format(:temperature)
-          should have_forecast(:low).as_format(:temperature)
+          night_forcast = subject.forecast.find{ |p| !p.low.nil? }
+          expect(night_forcast).to have_data(:low).as_format(:temperature)
+          expect(night_forcast).to have_data(:starts_at).as_format(:time)
+          expect(night_forcast).to have_data(:ends_at).as_format(:time)
+          expect(night_forcast).to have_data(:condition).as_format(:string)
+          expect(night_forcast).to have_data(:icon).as_format(:number)
+          expect(night_forcast).to have_data(:pop).as_format(:float)
         end
       end
     end

@@ -8,18 +8,22 @@ require_relative '../lib/barometer/weather_bug'
 
 Dir['./spec/support/**/*.rb'].sort.each {|f| require f}
 
-WEATHERBUG_CODE = Barometer::Support::KeyFileParser.find(:weather_bug, :code) || 'weatherbug'
-downcased_weatherbug_code = WEATHERBUG_CODE.to_s
-downcased_weatherbug_code[0] = WEATHERBUG_CODE.to_s[0..0].downcase
+WEATHERBUG_CLIENT_ID = Barometer::Support::KeyFileParser.find(:weather_bug, :client_id) || 'weatherbug_id'
+WEATHERBUG_CLIENT_SECRET = Barometer::Support::KeyFileParser.find(:weather_bug, :client_secret) || 'weatherbug_secret'
 
 VCR.configure do |config|
   config.cassette_library_dir = 'spec/cassettes'
   config.hook_into :webmock
   config.default_cassette_options = { record: :none, serialize_with: :json }
 
-  config.filter_sensitive_data('WEATHERBUG_CODE') { WEATHERBUG_CODE.to_s }
-  # weather bug uses api as host name.  this is downcased when the request it made
-  config.filter_sensitive_data('WEATHERBUG_CODE') { downcased_weatherbug_code }
+  config.filter_sensitive_data('WEATHERBUG_CLIENT_ID') { WEATHERBUG_CLIENT_ID.to_s }
+  config.filter_sensitive_data('WEATHERBUG_CLIENT_SECRET') { WEATHERBUG_CLIENT_SECRET.to_s }
+  config.filter_sensitive_data('WEATHERBUG_ACCESS_CODE') do |interaction|
+    if !defined?(WEATHERBUG_ACCESS_CODE) && interaction.request.uri =~ /thepulseapi.earthnetworks.com\/oauth20\/token/
+      WEATHERBUG_ACCESS_CODE = JSON.parse(interaction.response.body)['OAuth20']['access_token']['token']
+    end
+  end
+    config.filter_sensitive_data('WEATHERBUG_ACCESS_CODE') { defined?(WEATHERBUG_ACCESS_CODE) ? WEATHERBUG_ACCESS_CODE.to_s : 'this_should_not_match'  }
 
   config.configure_rspec_metadata!
 end

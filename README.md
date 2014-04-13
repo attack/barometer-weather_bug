@@ -20,7 +20,7 @@ processing.
 
 ```ruby
 query = Barometer::Query.new('42.7243,-73.6927')
-keys = {api: 'forecast io apikey'}
+keys = {client_id: 'client_id', client_secret: 'client_secret'}
 
 result = Barometer::WeatherBug.call(query, keys: keys)
 puts result.current.temperature.c

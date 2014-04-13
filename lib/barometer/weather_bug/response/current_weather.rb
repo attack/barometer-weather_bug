@@ -1,78 +1,53 @@
-require_relative 'time_helper'
-require_relative 'sun'
-
 module Barometer
   class WeatherBug
     class Response
       class CurrentWeather
-        def initialize(payload, timezone)
+        def initialize(payload)
           @payload = payload
-          @timezone = timezone
           @current = Barometer::Response::Current.new
         end
 
         def parse
           current.observed_at = observed_at
-          current.stale_at = stale_at
           current.humidity = humidity
-          current.condition = condition
           current.icon = icon
           current.temperature = temperature
           current.dew_point = dew_point
-          current.wind_chill = wind_chill
           current.wind = wind
-          current.pressure = pressure
-          current.sun = WeatherBug::Response::Sun.new(payload, timezone).parse
 
           current
         end
 
         private
 
-        attr_reader :payload, :timezone, :current
+        attr_reader :payload, :current
 
         def units
           payload.units
         end
 
         def observed_at
-          @observed_at ||= TimeHelper.new(payload, timezone).parse('ob_date')
-        end
-
-        def stale_at
-          Utils::Time.add_one_hour(observed_at)
+          Utils::Time.parse(payload.fetch('observationTimeUtcStr'), '%Y-%m-%dT%H:%M:%S')
         end
 
         def humidity
           payload.fetch('humidity')
         end
 
-        def condition
-          payload.fetch('current_condition')
-        end
-
         def icon
-          payload.using(/cond(\d*)\.gif/).fetch('current_condition', '@icon')
+          payload.fetch('iconCode')
         end
 
         def temperature
-          [units, payload.fetch('temp')]
+          [units, payload.fetch('temperature')]
         end
 
         def dew_point
-          [units, payload.fetch('dew_point')]
-        end
-
-        def wind_chill
-          [units, payload.fetch('feels_like')]
+          [units, payload.fetch('dewPoint')]
         end
 
         def wind
-          [units, payload.fetch('wind_speed'), payload.fetch('wind_direction_degrees')]
-        end
-
-        def pressure
-          [units, payload.fetch('pressure')]
+          [units, payload.fetch('windSpeed'), payload.fetch('windDirection')]
         end
       end
     end

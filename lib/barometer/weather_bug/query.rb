@@ -6,7 +6,7 @@ module Barometer
       attr_reader :converted_query
 
       def self.accepted_formats
-        [:short_zipcode, :coordinates]
+        [:coordinates]
       end
 
       def initialize(query)
@@ -15,7 +15,11 @@ module Barometer
       end
 
       def to_param
-        {UnitType: unit_type}.merge(format_query)
+        {
+          locationtype: location_type,
+          units: units,
+          verbose: 'true'
+        }.merge(format_query)
       end
 
       private
@@ -24,16 +28,20 @@ module Barometer
         convert!(*self.class.accepted_formats)
       end
 
-      def format_query
-        if converted_query.format == :short_zipcode
-          {zipCode: converted_query.q}
-        else
-          {lat: converted_query.geo.latitude, long: converted_query.geo.longitude}
-        end
+      def location_type
+        'latitudelongitude'
       end
 
-      def unit_type
-        converted_query.metric? ? '1' : '0'
+      def units
+        converted_query.metric? ? 'metric' : 'english'
+      end
+
+      def format_query
+        if converted_query.geo
+          { location: "#{converted_query.geo.latitude},#{converted_query.geo.longitude}" }
+        else
+          { location: converted_query.to_s }
+        end
       end
     end
   end
