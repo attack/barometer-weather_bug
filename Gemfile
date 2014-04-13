@@ -8,8 +8,9 @@ group :development, :test do
   gem 'rspec', '>= 2.11'
 end
 
-group :development, :test do
+group :test do
   gem 'barometer-support', '>= 0.0.3'
+  gem 'multi_json'
   gem 'vcr'
   gem 'webmock'
 end
