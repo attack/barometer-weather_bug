@@ -61,7 +61,7 @@ module Barometer
           expect(result).to have_data(:current, :dew_point).as_format(:temperature)
           expect(result).to have_data(:current, :wind).as_format(:vector)
 
-          expect( subject.forecast.size ).to eq 18
+          expect( subject.forecast.size ).to be_within(1).of(19)
 
           day_forcast = subject.forecast.find{ |p| !p.high.nil? }
           expect(day_forcast).to have_data(:high).as_format(:temperature)
