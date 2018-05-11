@@ -1,4 +1,6 @@
-# Barometer::WeatherBug
+# Barometer::WeatherBug (deprecated)
+
+It appears WeatherBug has shut down their API service.  This code will not be useful for getting the weather.
 
 [![Build Status](https://travis-ci.org/attack/barometer-weather_bug.png?branch=master)](https://travis-ci.org/attack/barometer-weather_bug)
 [![Gem Version](https://badge.fury.io/rb/barometer-weather_bug.png)](http://badge.fury.io/rb/barometer-weather_bug)
